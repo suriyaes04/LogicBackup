@@ -50,6 +50,70 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Mappls token validation endpoint
+app.get('/api/validate-mappls', async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token) {
+      return res.status(400).json({ 
+        valid: false, 
+        error: 'Token is required' 
+      });
+    }
+
+    // Test token by making a request to Mappls API
+    const testUrl = `https://apis.mappls.com/advancedmaps/api/${token}/map_sdk?v=3.8&layer=vector`;
+    
+    try {
+      const response = await fetch(testUrl, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      
+      if (response.ok) {
+        res.json({
+          valid: true,
+          message: 'Token is valid',
+          tokenLength: token.length,
+          tokenPrefix: token.substring(0, 20) + '...'
+        });
+      } else if (response.status === 401) {
+        res.json({
+          valid: false,
+          error: 'Token is invalid or expired (401)',
+          suggestion: 'Please check your Mappls token and get a new one from mappls.com/api'
+        });
+      } else if (response.status === 403) {
+        res.json({
+          valid: false,
+          error: 'Token is forbidden (403)',
+          suggestion: 'Token may not have the required permissions'
+        });
+      } else {
+        res.json({
+          valid: false,
+          error: `Token validation failed (${response.status})`,
+          suggestion: 'Check token format and network connection'
+        });
+      }
+    } catch (fetchError) {
+      res.json({
+        valid: false,
+        error: 'Network error during validation',
+        details: fetchError.message,
+        suggestion: 'Check network connection and try again'
+      });
+    }
+  } catch (error) {
+    console.error('Token validation error:', error);
+    res.status(500).json({ 
+      valid: false, 
+      error: 'Internal server error during validation' 
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });

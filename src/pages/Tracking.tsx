@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { bookingService, vehicleService, userService } from "@/lib/firebase-utils";
 import { Booking, Vehicle, User } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+// CHANGE: Import VehicleLiveMap component
+import { VehicleLiveMap } from '@/components/VehicleLiveMap';
 
 export default function Tracking() {
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -17,10 +19,19 @@ export default function Tracking() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
+  // CHANGE: Added for debugging purposes as requested
+  useEffect(() => {
+    if (selectedBooking && vehicle) {
+      console.log(`[Tracking Page] Loaded data for Booking ID: ${selectedBooking.id}, Vehicle ID: ${vehicle.id}`);
+    }
+  }, [selectedBooking, vehicle]);
+
   const handleSearch = async () => {
     if (!trackingNumber.trim()) return;
     
     setLoading(true);
+    // CHANGE: Added for debugging
+    console.log(`[Tracking Page] Searching for booking: ${trackingNumber}`);
     try {
       // Search by booking ID
       const booking = await bookingService.getBookingById(trackingNumber);
@@ -40,9 +51,11 @@ export default function Tracking() {
         setSelectedBooking(null);
         setVehicle(null);
         setDriver(null);
+        // CHANGE: Added for debugging
+        console.log(`[Tracking Page] Booking not found: ${trackingNumber}`);
       }
     } catch (error) {
-      console.error('Error searching booking:', error);
+      console.error('[Tracking Page] Error searching booking:', error);
       setSelectedBooking(null);
     } finally {
       setLoading(false);
@@ -258,33 +271,31 @@ export default function Tracking() {
 
           {/* Map and Additional Info */}
           <div className="space-y-6">
-            {/* Live Map */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Live Tracking
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-center">
-                    <Navigation className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Interactive map will be displayed here</p>
-                    {vehicle && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Vehicle: {vehicle.name}
-                      </p>
-                    )}
+            {/* CHANGE: Replaced placeholder with VehicleLiveMap component */}
+            {vehicle ? (
+              <VehicleLiveMap 
+                vehicleId={vehicle.id} 
+                vehicleName={vehicle.name}
+                height="400px" 
+              />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Live Tracking
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <Loader2 className="w-8 h-8 text-muted-foreground mx-auto mb-2 animate-spin" />
+                      <p className="text-sm text-muted-foreground">Loading vehicle data...</p>
+                    </div>
                   </div>
-                </div>
-                {vehicle && (
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={`/track/${vehicle.id}`}>View Live Tracking</a>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Driver Info */}
             {driver && (

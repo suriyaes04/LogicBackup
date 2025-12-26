@@ -60,7 +60,7 @@
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "lucide-react": "^0.462.0",
-    "mappls-web-maps": "^3.8.0",
+    "maplibre-gl": "^4.7.1",
     "multer": "^2.0.2",
     "next-themes": "^0.3.0",
     "razorpay": "^2.9.2",
